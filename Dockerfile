@@ -8,5 +8,6 @@ COPY . .
 
 # Install node_modules
 RUN npm install
+RUN gulp build
 
 CMD node app.js
