@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "private": "true",
   "dependencies": {
-    "angular": "^1.7.8",
+    "angular": "^1.7.9",
     "angular-ui-router": "^1.0.23",
     "async": "^2.6.3",
     "bcrypt": "^3.0.6",
