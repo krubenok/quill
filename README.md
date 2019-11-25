@@ -25,11 +25,15 @@ Quill is a registration system designed especially for hackathons. For hackers, 
       - [Users Table](#users-table)
       - [Settings](#settings)
   - [Setup](#setup)
-    - [Cloud Deployment](#cloud-deployment)
-      - [Heroku](#heroku)
-    - [Deploying locally](#deploying-locally)
-      - [Requirements](#requirements)
+    - [Requirements](#requirements)
+    - [Local Deployment](#local-deployment)
+      - [MongoDB](#mongodb)
+      - [SMTP](#smtp)
+      - [Quill](#quill-1)
     - [Deploying for your hackathon](#deploying-for-your-hackathon)
+      - [MongoDB](#mongodb-1)
+      - [SMTP](#smtp-1)
+      - [Quill](#quill-2)
   - [Customizing for your event](#customizing-for-your-event)
     - [Copy](#copy)
     - [Branding / Assets](#branding--assets)
@@ -40,6 +44,9 @@ Quill is a registration system designed especially for hackathons. For hackers, 
     - [Lint](#lint)
     - [Publish to Docker Hub](#publish-to-docker-hub)
     - [Automated Dependency Updates](#automated-dependency-updates)
+  - [Testing](#testing)
+    - [Jest](#jest)
+    - [Accessibility](#accessibility)
   - [Contributing](#contributing)
   - [Feedback / Questions](#feedback--questions)
   - [License](#license)
@@ -109,15 +116,9 @@ On the Settings tab, admins can easily control their event application timeline 
 
 ## Setup
 
-### Cloud Deployment
-
-#### Heroku
-
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
-### Deploying locally
-
-#### Requirements
+### Requirements
 
 | Requirement                  | Version  |
 | ---------------------------- | -------- |
@@ -138,12 +139,30 @@ mongo --version
 
 Additonally, there is an `.nvmrc` file in the root of the project. You can use [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm) to make sure you are using the right version of node for this and other projects! This also ensures that any cloud deployments of the project use the same version of Node.
 
-Getting a local instance of Quill up and running takes less than 5 minutes! Start by setting up the database. Ideally, you should run MongoDB as a daemon with a secure configuration (with most linux distributions, you should be able to install it with your package manager, and it'll be set up as a daemon). Although not recommended for production, when running locally for development, you could do it like this
+We use `dotenv` to keep track of environment variables, so be sure to stop tracking the `.env` file in Git:
+
+```bash
+git update-index --assume-unchanged .env
+```
+
+After doing this, fill in the environment variables in the `.env` before running Quill.
+
+### Local Deployment
+
+#### MongoDB
+
+Ideally, you should run MongoDB as a daemon with a secure configuration (with most linux distributions, you should be able to install it with your package manager, and it'll be set up as a daemon). Although not recommended for production, when running locally for development, you could do it like this
 
 ```bash
 mkdir db
 mongod --dbpath db --bind_ip 127.0.0.1
 ```
+
+#### SMTP
+
+This step is only required if you want to test the email-related functionality of Quill. The easiest option is to use the SMTP server provided by your personal email (Gmail, Outlook, etc.). Look for the documentation about SMTP for your respective email and fill in the values in the `.env` accordingly. Be warned that sending many emails this way is not recommended and this method should only be used for testing. In particular, note that Gmail will require you to enable less secure apps in your security settings before Quill will be able to send email.
+
+#### Quill
 
 Install the necessary dependencies:
 
@@ -151,19 +170,23 @@ Install the necessary dependencies:
 npm install
 ```
 
-We use `dotenv` to keep track of environment variables, so be sure to stop tracking the `.env` file in Git:
-
-```bash
-git update-index --assume-unchanged .env
-```
-
-Edit the configuration file in `.env` for your setup, and then run the application:
+Ensure you have filled in the `.env` according to your setup, and then run the application:
 
 ```bash
 gulp server
 ```
+
 ### Deploying for your hackathon
-The database can either be hosted with [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) or on your own server. Atlas will generally be easier to set up and should be the preferred choice unless you are familiar with administering your own server. A guide to setting up Atlas can be found [here](https://docs.atlas.mongodb.com/getting-started/). Note that the URI for the database (which must be specified in `.env`) will be different depending on where your database is hosted. 
+
+#### MongoDB
+
+The database can either be hosted with a cloud-hosted MongoDB provider, such as [MongoDB Atlas](https://www.mongodb.com/cloud/atlas), or on your own server. Cloud-hosted MongoDB will generally be easier to set up and should be the preferred choice unless you are familiar with administering your own server. A guide to setting up Atlas can be found [here](https://docs.atlas.mongodb.com/getting-started/). Note that the URI for the database (which must be specified in `.env`) will be different depending on where your database is hosted. If you use the "Deploy the Heroku" button in this document, a MongoDB instance will automatically be spawned via Heroku.
+
+#### SMTP
+
+A dedicated SMTP provider is absolutely required if you want Quill to work for your hackathon. There are several providers available such as [Mailgun](https://www.mailgun.com) or [Sendgrid](https://sendgrid.com), both part of the GitHub Student Developer Pack. After setting this up, fill in the `.env` with the values that your provider gives you.
+
+#### Quill
 
 There are also several options for hosting Quill itself. You can use Heroku by clicking the __Deploy to Heroku__ button above where, after making a Heroku account, you will be able to set the configuration variables and deploy Quill. A Dockerfile has also been provided to make it easy to run Quill in a Docker container either on your own server or with your preferred cloud service provider. Don't forget to publish the container's port `3000` to the host machine. If using the command line, this is done by using the `-p` flag and specifying which port on the host machine should redirect to port 3000 on the container.
 
@@ -234,9 +257,25 @@ This project has been set up to run workflows that send notifications to a Disco
 
 * Note that leaving `/github` at the end of the `DISCORD_WEBHOOK` token (contrary to what the action recommends)  will use the default GitHub webhook settings in addition to sending this action's notification. We suggest leaving it if there is no webhook already configured.
 
-
 ##### Slack Notification
 [Configuring the action to send notifications to your organization's Slack workspace can be found here.](https://github.com/marketplace/actions/slack-notify)
+
+## Testing
+
+### Jest
+
+Basic Jest testing has been implemented in the `test.js` file. Currently the only test is to check that the `/login` page returns a HTTP 200 status code. These tests can be run using the `npm run test` command. More Jest tests including snapshots and unit tests should be added as features are created or updated. 
+
+### Accessibility
+
+Testing for accessibility is a great way to make sure that all hackathon enthusiasts can use Quill, regardless of ability. It's good practice to run accessibility tests on any changes that you've made to ensure that no new accessibility errors were introduced.
+
+An accessibility testing tool, pa11y-ci, has been provided and configured for this project. To run pa11y-ci, make sure that Quill is running locally on http://localhost:3000/ (alternatively, you can change the URLs specified in `.pa11yci` to match those of your running instance). Then, run the command `npm run test:accessibility`. If several of the URLs checked by pa11y-ci produce the same number of errors, pa11y-ci may be having trouble logging in with the default admin credentials specified in `.env`. Check that your instance of Quill is running correctly, or change the credentials used in `.pa11yci`.
+
+If your contribution adds any new pages to Quill, please add them to `.pa11yci` to make sure that these pages are covered by the accessibility tests. If your new pages are accessed as a non-logged-in user, add them at the beginning of the URL list. If they are accessed when logged in, add them after the URL with actions to log in.
+
+For more information on pa11y-ci, please visit [pa11y-ci] and [pa11y], in particular the [section on actions][pa11y-actions].
+
 
 ## Contributing
 
@@ -254,3 +293,6 @@ Copyright (c) 2015-2016 [Edwin Zhang](https://github.com/ehzhang). Released unde
 [license]: https://github.com/techx/quill/blob/master/LICENSE
 [email]: mailto:quill@hackmit.org
 [users]: https://github.com/techx/quill/wiki/Quill-Users
+[pa11y-ci]: https://github.com/pa11y/pa11y-ci
+[pa11y]: https://github.com/pa11y/pa11y
+[pa11y-actions]: https://github.com/pa11y/pa11y#actions
